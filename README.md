@@ -42,6 +42,12 @@ true</pre>
 
 > Notice `scope.result` returns the initial value immediately, after waiting it returns the last computed value.
 
+### Using context
+
+Calling `createContext(render[, cb])` will return a function later used to compute values.
+
+It also accepts a second argument that is called to set the `scope.set` method, for triggering updates.
+
 ### Available hooks
 
 - `onError(cb)` &mdash; Capture unhandled exceptions.
