@@ -97,6 +97,10 @@ function createContext(render, callback = fn => fn()) {
       if (scope.get) next(Promise.resolve(end()));
     }
 
+    scope.clear = () => {
+      if (scope.get) after();
+    };
+
     scope.sync = () => {
       deferred = next(scope.set());
       return deferred;

@@ -64,6 +64,38 @@ describe('createContext()', () => {
     expect(td.explain(render).callCount).to.eql(1);
     expect(td.explain(callback).callCount).to.eql(1);
   });
+
+  it('should allow to clear out context effects', async () => {
+    const fn = td.func('clearTimeout');
+
+    let t;
+    const scope = createContext(() => {
+      const [v, s] = useState(0);
+
+      useEffect(() => {
+        t = setTimeout(() => {
+          s(v + 1);
+        }, 100);
+        return () => fn(t);
+      }, [v]);
+      return v;
+    })();
+
+    await scope.defer(50);
+
+    let fallback;
+    try {
+      scope.clear();
+    } catch (e) {
+      fallback = true;
+    } finally {
+      clearTimeout(t);
+    }
+
+    expect(fallback).to.be.undefined;
+    expect(scope.result).to.eql(0);
+    expect(td.explain(fn).callCount).to.eql(1);
+  });
 });
 
 describe('getContext()', () => {
