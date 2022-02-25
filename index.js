@@ -53,13 +53,11 @@ function equals(a, b) {
   return a === b;
 }
 
-function createContext(render, callback = fn => fn()) {
-  if (typeof render !== 'function' || typeof callback !== 'function') {
-    throw new TypeError('Invalid input for createContext()');
-  }
+class Context {
+  constructor(args, render, callback) {
+    const scope = this;
 
-  return (...args) => {
-    const scope = { c: 0 };
+    scope.c = 0;
 
     function end(skip) {
       try {
@@ -97,6 +95,9 @@ function createContext(render, callback = fn => fn()) {
       if (scope.get) next(Promise.resolve(end()));
     }
 
+    scope.defer = ms => Promise.resolve()
+      .then(() => new Promise(ok => setTimeout(() => ok(scope), ms)));
+
     scope.clear = () => {
       if (scope.get) after();
     };
@@ -106,7 +107,7 @@ function createContext(render, callback = fn => fn()) {
       return deferred;
     };
 
-    return callback(() => {
+    scope.run = callback(() => {
       ;(function loop() { // eslint-disable-line
         scope.set = scope.set || (() => Promise.resolve().then(() => {
           if (!equals(scope.val, scope.old)) loop();
@@ -139,12 +140,17 @@ function createContext(render, callback = fn => fn()) {
         }
       })();
 
-      scope.defer = ms => Promise.resolve()
-        .then(() => new Promise(ok => setTimeout(() => ok(scope), ms)));
-
       return scope;
     }, sync => { scope.set = sync; });
-  };
+  }
+}
+
+function createContext(render, callback = fn => fn()) {
+  if (typeof render !== 'function' || typeof callback !== 'function') {
+    throw new TypeError('Invalid input for createContext()');
+  }
+
+  return (...args) => new Context(args, render, callback).run;
 }
 
 function onError(callback) {
@@ -218,6 +224,7 @@ function useEffect(callback, inputs) {
 module.exports = {
   clone,
   equals,
+  Context,
   getContext,
   createContext,
   onError,
