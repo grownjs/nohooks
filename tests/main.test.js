@@ -82,17 +82,8 @@ describe('createContext()', () => {
     })();
 
     await scope.defer(50);
+    scope.clear();
 
-    let fallback;
-    try {
-      scope.clear();
-    } catch (e) {
-      fallback = true;
-    } finally {
-      clearTimeout(t);
-    }
-
-    expect(fallback).to.be.undefined;
     expect(scope.result).to.eql(0);
     expect(td.explain(fn).callCount).to.eql(1);
   });
@@ -216,28 +207,50 @@ describe('useState()', () => {
 describe('useEffect()', () => {
   it('should allow to trigger effects after render', async () => {
     const callback = td.func('fx');
+    const effect = td.func('fx');
+
+    td.when(effect()).thenReturn(callback);
+
     const scope = createContext(() => {
-      useEffect(callback);
+      const [value, setValue] = useState(5);
+
+      if (value > 1) setValue(value - 1);
+      useEffect(effect);
       return 'OSOM';
     })();
 
     await scope.defer();
     expect(scope.result).to.eql('OSOM');
+    expect(td.explain(effect).callCount).to.eql(1);
+    expect(td.explain(callback).callCount).to.eql(0);
+
+    scope.clear();
+    expect(td.explain(effect).callCount).to.eql(1);
     expect(td.explain(callback).callCount).to.eql(1);
   });
 
   it('should skip callback if the input does not change', async () => {
-    const callback = td.func('fx');
+    const callback = td.func('cb');
+    const effect = td.func('fx');
+
+    td.when(effect()).thenReturn(callback);
+
     const scope = createContext(() => {
-      const [value, setValue] = useState(3);
+      const [value, setValue] = useState(5);
 
       if (value > 1) setValue(value - 1);
-      useEffect(callback, []);
+      useEffect(effect, []);
       return value;
     })();
 
     await scope.defer();
     expect(scope.result).to.eql(1);
+    expect(td.explain(effect).callCount).to.eql(1);
+    expect(td.explain(callback).callCount).to.eql(0);
+
+    scope.clear();
+    expect(scope.result).to.eql(1);
+    expect(td.explain(effect).callCount).to.eql(1);
     expect(td.explain(callback).callCount).to.eql(1);
   });
 

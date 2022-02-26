@@ -62,14 +62,32 @@ class Context {
     function end(skip) {
       try {
         scope.get.forEach(fx => {
-          if (fx.off) fx.off();
-          if (!skip && fx.on && fx.cb) {
+          if (fx.off && !fx.once) {
+            fx.off();
+            fx.off = null;
+          }
+
+          if (fx.once && fx.cb && !fx.off) {
             const retval = fx.cb();
 
+            fx.once = false;
             if (typeof retval === 'function') {
               fx.off = retval;
             }
+          }
+
+          if (skip === null && fx.on && fx.cb) {
+            const retval = fx.cb();
+
             fx.on = false;
+            if (typeof retval === 'function') {
+              fx.off = retval;
+            }
+          }
+
+          if (skip === false && fx.off) {
+            fx.off();
+            fx.off = null;
           }
         });
       } catch (e) {
@@ -91,15 +109,15 @@ class Context {
       });
     }
 
-    function after() {
-      if (scope.get) next(Promise.resolve(end()));
+    function after(clear) {
+      if (scope.get) next(Promise.resolve(end(clear)));
     }
 
     scope.defer = ms => Promise.resolve()
       .then(() => new Promise(ok => setTimeout(() => ok(scope), ms)));
 
     scope.clear = () => {
-      if (scope.get) after();
+      if (scope.get) after(false);
     };
 
     scope.sync = () => {
@@ -136,7 +154,7 @@ class Context {
           throw new Error(`Unexpected failure in context\n${e.message}`);
         } finally {
           pop(scope);
-          after();
+          after(null);
         }
       })();
 
@@ -213,12 +231,13 @@ function useEffect(callback, inputs) {
   scope.get = scope.get || [];
 
   const prev = scope.in[key];
-  const enabled = inputs ? !equals(prev, inputs) : true;
+  const scoped = !inputs || !inputs.length;
+  const enabled = !scoped && !equals(prev, inputs);
 
   scope.in[key] = inputs;
   scope.get[key] = scope.get[key] || {};
 
-  Object.assign(scope.get[key], { cb: callback, on: enabled });
+  Object.assign(scope.get[key], { cb: callback, on: enabled, once: scoped });
 }
 
 module.exports = {
