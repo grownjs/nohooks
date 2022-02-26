@@ -223,6 +223,7 @@ function useState(fallback) {
       scope.val[key] = v;
     }
     scope.sync();
+    return scope.val[key];
   }];
 }
 

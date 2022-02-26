@@ -147,11 +147,12 @@ describe('useState()', () => {
   });
 
   it('should allow callbacks as setters', async () => {
+    const stack = [];
     const scope = createContext(() => {
       const [value, setValue] = useState(0);
       useEffect(() => {
         const t = setInterval(() => {
-          setValue(x => x + 1);
+          stack.push(setValue(x => x + 1));
         }, 100);
         return () => clearInterval(t);
       });
@@ -162,6 +163,7 @@ describe('useState()', () => {
     scope.clear();
 
     expect(scope.result).to.eql(2);
+    expect(stack).to.eql([1, 2]);
   });
 
   it('should run updates in sequence', async () => {
