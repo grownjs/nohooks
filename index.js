@@ -217,7 +217,11 @@ function useState(fallback) {
   }
 
   return [scope.val[key], v => {
-    scope.val[key] = v;
+    if (typeof v === 'function') {
+      scope.val[key] = v(scope.val[key]);
+    } else {
+      scope.val[key] = v;
+    }
     scope.sync();
   }];
 }

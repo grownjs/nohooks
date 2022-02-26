@@ -146,6 +146,24 @@ describe('useState()', () => {
     expect(scope.result).to.eql('OSOM');
   });
 
+  it('should allow callbacks as setters', async () => {
+    const scope = createContext(() => {
+      const [value, setValue] = useState(0);
+      useEffect(() => {
+        const t = setInterval(() => {
+          setValue(x => x + 1);
+        }, 100);
+        return () => clearInterval(t);
+      });
+      return value;
+    })();
+
+    await scope.defer(250);
+    scope.clear();
+
+    expect(scope.result).to.eql(2);
+  });
+
   it('should run updates in sequence', async () => {
     const stack = [];
 
