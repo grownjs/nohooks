@@ -1,9 +1,9 @@
 /* eslint-disable no-unused-expressions */
 
-const td = require('testdouble');
-const { expect } = require('chai');
+import * as td from 'testdouble';
+import { expect } from 'chai';
 
-const {
+import {
   clone,
   equals,
   onError,
@@ -13,7 +13,7 @@ const {
   useEffect,
   getContext,
   createContext,
-} = require('..');
+} from '../index.js';
 
 /* global beforeEach, describe, it */
 

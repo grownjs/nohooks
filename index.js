@@ -1,6 +1,6 @@
 const contextStack = [];
 
-function getContext() {
+export function getContext() {
   const scope = contextStack[contextStack.length - 1];
 
   if (!scope) {
@@ -25,7 +25,7 @@ function undef(value) {
   return typeof value === 'undefined' || value === null;
 }
 
-function clone(value) {
+export function clone(value) {
   if (!value || !isObj(value)) return value;
   if (Array.isArray(value)) return value.map(x => clone(x));
   if (value instanceof Date) return new Date(value.getTime());
@@ -33,7 +33,7 @@ function clone(value) {
   return Object.keys(value).reduce((memo, k) => Object.assign(memo, { [k]: clone(value[k]) }), {});
 }
 
-function equals(a, b) {
+export function equals(a, b) {
   if (typeof a !== typeof b) return;
   if (a instanceof Array) {
     if (a.length !== b.length) return;
@@ -53,7 +53,7 @@ function equals(a, b) {
   return a === b;
 }
 
-class Context {
+export class Context {
   constructor(args, render, callback) {
     const scope = this;
 
@@ -163,7 +163,7 @@ class Context {
   }
 }
 
-function createContext(render, callback = fn => fn()) {
+export function createContext(render, callback = fn => fn()) {
   if (typeof render !== 'function' || typeof callback !== 'function') {
     throw new TypeError('Invalid input for createContext()');
   }
@@ -171,11 +171,11 @@ function createContext(render, callback = fn => fn()) {
   return (...args) => new Context(args, render, callback).run;
 }
 
-function onError(callback) {
+export function onError(callback) {
   getContext().onError = callback;
 }
 
-function useMemo(callback, inputs) {
+export function useMemo(callback, inputs) {
   const scope = getContext();
   const key = scope.m;
 
@@ -192,7 +192,7 @@ function useMemo(callback, inputs) {
   return scope.v[key];
 }
 
-function useRef(result) {
+export function useRef(result) {
   return useMemo(() => {
     let value = clone(result);
 
@@ -205,7 +205,7 @@ function useRef(result) {
   }, []);
 }
 
-function useState(fallback) {
+export function useState(fallback) {
   const scope = getContext();
   const key = scope.key;
 
@@ -227,7 +227,7 @@ function useState(fallback) {
   }];
 }
 
-function useEffect(callback, inputs) {
+export function useEffect(callback, inputs) {
   const scope = getContext();
   const key = scope.fx;
 
@@ -244,16 +244,3 @@ function useEffect(callback, inputs) {
 
   Object.assign(scope.get[key], { cb: callback, on: enabled, once: scoped });
 }
-
-module.exports = {
-  clone,
-  equals,
-  Context,
-  getContext,
-  createContext,
-  onError,
-  useMemo,
-  useRef,
-  useState,
-  useEffect,
-};

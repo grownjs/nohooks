@@ -3,11 +3,12 @@
   "version": "0.0.6",
   "description": "Frameworkless hooks",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "dev": "npm run test:unit -- -w",
     "test": "npm run test:unit",
     "test:ci": "npm run coverage && npm run report -- -r lcov",
-    "test:unit": "NODE_ENV=test _mocha --exit --colors --recursive -bR spec tests",
+    "test:unit": "NODE_ENV=test _mocha --exit --colors --recursive --parallel --loader=testdouble -bR spec tests",
     "coverage": "nyc --silent -x '**/fixtures/**' -x '**/*.test.js' npm run test:unit",
     "codecov": "codecov --file=coverage/lcov.info",
     "report": "nyc report",
