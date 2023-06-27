@@ -120,12 +120,14 @@ export class Context {
       if (scope.get) after(false);
     };
 
+    let context = [];
     scope.sync = () => {
-      deferred = next(scope.set());
+      deferred = next(scope.set(scope, ...context));
       return deferred;
     };
 
-    scope.run = callback(() => {
+    scope.run = callback((..._args) => {
+      context = _args;
       ;(function loop() { // eslint-disable-line
         scope.set = scope.set || (() => Promise.resolve().then(() => {
           if (!equals(scope.val, scope.old)) loop();
@@ -159,7 +161,7 @@ export class Context {
       })();
 
       return scope;
-    }, sync => { scope.set = sync; });
+    }, sync => { scope.set = sync; }, scope);
   }
 }
 

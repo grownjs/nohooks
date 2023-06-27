@@ -6,6 +6,7 @@ import { expect } from 'chai';
 import {
   clone,
   equals,
+  Context,
   onError,
   useMemo,
   useRef,
@@ -56,7 +57,7 @@ describe('createContext()', () => {
     const callback = td.func('sync');
     const render = td.func('tag');
 
-    td.when(callback(td.matchers.isA(Function), td.matchers.isA(Function)))
+    td.when(callback(td.matchers.isA(Function), td.matchers.isA(Function), td.matchers.isA(Context)))
       .thenDo((fn, set) => [fn(), set()]);
 
     createContext(render, callback)();
