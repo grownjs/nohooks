@@ -1,6 +1,6 @@
 {
   "name": "nohooks",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Frameworkless hooks",
   "main": "index.js",
   "type": "module",
