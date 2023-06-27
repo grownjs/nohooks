@@ -22,6 +22,9 @@
   "files": [
     "index.js"
   ],
+  "engines": {
+    "node": "*"
+  },
   "author": "Alvaro Cabrera <yo@soypache.co>",
   "license": "MIT",
   "devDependencies": {
