@@ -113,11 +113,42 @@ export class Context {
       if (scope.get) next(Promise.resolve(end(clear)));
     }
 
+    scope.equals = () => equals(scope.val, scope.old);
+
     scope.defer = ms => Promise.resolve()
       .then(() => new Promise(ok => setTimeout(() => ok(scope), ms)));
 
     scope.clear = () => {
       if (scope.get) after(false);
+    };
+
+    scope.loop = () => { // eslint-disable-line
+      scope.set = scope.set || (() => Promise.resolve().then(() => scope.equals() || scope.loop()));
+      scope.old = clone(scope.val);
+      scope.key = 0;
+      scope.fx = 0;
+      scope.m = 0;
+      scope.c += 1;
+
+      push(scope);
+
+      try {
+        scope.result = render(...args);
+
+        const key = [scope.key, scope.fx, scope.m].join('.');
+
+        if (!scope.hash) {
+          scope.hash = key;
+        } else if (scope.hash !== key) {
+          throw new Error('Hooks must be called in a predictable way');
+        }
+        return scope.result;
+      } catch (e) {
+        throw new Error(`Unexpected failure in context\n${e.message}`);
+      } finally {
+        pop(scope);
+        after(null);
+      }
     };
 
     let context = [];
@@ -126,42 +157,13 @@ export class Context {
       return deferred;
     };
 
-    scope.run = callback((..._args) => {
+    scope.run = (..._args) => {
       context = _args;
-      ;(function loop() { // eslint-disable-line
-        scope.set = scope.set || (() => Promise.resolve().then(() => {
-          if (!equals(scope.val, scope.old)) loop();
-        }));
-
-        scope.old = clone(scope.val);
-        scope.key = 0;
-        scope.fx = 0;
-        scope.m = 0;
-        scope.c += 1;
-
-        push(scope);
-
-        try {
-          scope.result = render(...args);
-
-          const key = [scope.key, scope.fx, scope.m].join('.');
-
-          if (!scope.hash) {
-            scope.hash = key;
-          } else if (scope.hash !== key) {
-            throw new Error('Hooks must be called in a predictable way');
-          }
-          return scope.result;
-        } catch (e) {
-          throw new Error(`Unexpected failure in context\n${e.message}`);
-        } finally {
-          pop(scope);
-          after(null);
-        }
-      })();
-
+      scope.loop();
       return scope;
-    }, sync => { scope.set = sync; }, scope);
+    };
+
+    callback(scope.run, sync => { scope.set = sync; }, scope);
   }
 }
 
@@ -170,7 +172,7 @@ export function createContext(render, callback = fn => fn()) {
     throw new TypeError('Invalid input for createContext()');
   }
 
-  return (...args) => new Context(args, render, callback).run;
+  return (...args) => new Context(args, render, callback);
 }
 
 export function onError(callback) {
